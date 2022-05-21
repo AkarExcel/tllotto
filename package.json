@@ -1,0 +1,26 @@
+{
+  "name": "tllotto",
+  "version": "1.0.0",
+  "description": "this is a decentralized raffle draw for the Touch live Lottery",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AkarExcel/tllotto.git"
+  },
+  "keywords": [
+    "touch",
+    "live",
+    "lottory",
+    "crypto",
+    "lottery"
+  ],
+  "author": "Akar Excel",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/AkarExcel/tllotto/issues"
+  },
+  "homepage": "https://github.com/AkarExcel/tllotto#readme"
+}
