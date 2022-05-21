@@ -22,5 +22,8 @@
   "bugs": {
     "url": "https://github.com/AkarExcel/tllotto/issues"
   },
-  "homepage": "https://github.com/AkarExcel/tllotto#readme"
+  "homepage": "https://github.com/AkarExcel/tllotto#readme",
+  "devDependencies": {
+    "hardhat": "^2.9.6"
+  }
 }
