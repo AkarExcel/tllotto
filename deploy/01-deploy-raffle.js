@@ -13,4 +13,10 @@ module.exports = async ({ getNamedAccounts, deployments}) => {
         ENTRANCE_FEE,
         "500000"
     ]
+
+    const raffle = await deploy("Raffle", {
+        from: deployer,
+        args: args,
+        log: true
+    })
 }
