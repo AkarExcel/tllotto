@@ -24,6 +24,10 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
 module.exports = {
 
   networks: {
+    ganache:{
+      url: "http://127.0.0.1:8545",
+      chainId:1337
+    },
     BSC_Testnet: {
       url: secret.url,
       accounts: [secret.key],
@@ -41,7 +45,7 @@ module.exports = {
   },
 
   etherscan: {
-    apiKey: "UMUKJHF3PPW9NEW6SMM4EXPSIPXUSKZB8J"
+    apiKey: [secret.apiKey]
   },
 
   solidity: "0.8.7",
