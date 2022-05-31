@@ -41,5 +41,7 @@
     "solhint": "^3.3.7",
     "solidity-coverage": "^0.7.21"
   },
-  "dependencies": {}
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.6.0"
+  }
 }

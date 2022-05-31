@@ -40,13 +40,53 @@ module.exports = {
 
   namedAccounts: {
     deployer: {
-      default: 0
+      default: [0]
     }
   },
 
+
   etherscan: {
-    apiKey: [secret.apiKey]
+    apiKey: secret.APIKey
   },
 
-  solidity: "0.8.7",
+  namedAccounts: {
+    deployer: {
+      default: 0,
+      4: 0,
+    },
+    user2: {
+      default: 1,
+      4: 1,
+    },
+    user3: {
+      default: 2,
+      4: 2,
+    },
+  },
+
+  solidity: {
+    compilers: [
+      {
+        version: "0.8.7",
+      },
+      {
+        version: "0.4.8",
+      },
+      {
+        version: "0.4.11",
+      },
+      {
+        version: "0.8.0"
+      },
+      {
+        version: "0.6.0"
+      },
+      {
+        version: "0.4.24"
+      },
+      {
+        version: "0.6.6"
+      },
+    ],
+  },
 };
