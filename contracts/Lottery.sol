@@ -25,8 +25,6 @@ contract Lottery is VRFConsumerBaseV2, AccessControl{
 
     Counters.Counter private lotteryId;
 
-    uint public totalAllowedPlayers = 100;
-
     mapping(uint256 => uint256) private lotteryRandomnessRequest;
     bytes32 private keyHash;
     uint64 immutable s_subscriptionId;
@@ -43,7 +41,7 @@ contract Lottery is VRFConsumerBaseV2, AccessControl{
     event NewLotteryPlayer(uint256, address, uint256);
 
     //To emit data which will contain the id of newly created lottery
-    event LotteryCreated(uint256);
+    event LotteryCreated(uint256, address);
 
 
     //custom Errors
@@ -55,6 +53,7 @@ contract Lottery is VRFConsumerBaseV2, AccessControl{
     error lotteryEnded();
     error playersNotFound();
     error onlyLotteryManagerAllowed();
+    error ticketCostNotCorrect();
 
      constructor(
         bytes32 _keyHash,
@@ -74,6 +73,8 @@ contract Lottery is VRFConsumerBaseV2, AccessControl{
         LOTTERY_DATA = LotteryData(_lotteryData);
     }
 
+    /*@title this functions set the roles for lottery
+    */
     function setLotteryOwner(address _newLotteryOwner) public onlyRole(DEFAULT_ADMIN_ROLE) {
         _grantRole(RAFFLE_OWNER, _newLotteryOwner);
     }
@@ -94,14 +95,11 @@ contract Lottery is VRFConsumerBaseV2, AccessControl{
         return LOTTERY_DATA.getAllLotteryIds();
     }
 
-    function startLottery() public payable onlyRole(RAFFLE_OWNER) {
-        LOTTERY_DATA.addLotteryData(lotteryId.current());
+    function startLottery(uint256 _lotteryTicketPrice) public payable onlyRole(RAFFLE_OWNER) {
+        LOTTERY_DATA.addLotteryData(lotteryId.current(), msg.sender);
         lotteryId.increment();
-        emit LotteryCreated(lotteryId.current());
-    }
-
-    function setNumberOfPlayers(uint32 _totalAllowedPlayers) public onlyRole(RAFFLE_OWNER) {
-        totalAllowedPlayers = _totalAllowedPlayers;
+        LOTTERY_DATA.lotteryTicketPrice = _lotteryTicketPrice;
+        emit LotteryCreated(lotteryId.current(), msg.sender);
     }
 
     function isPresent(address[] memory _p, address _a) public pure returns (bool){
@@ -113,20 +111,22 @@ contract Lottery is VRFConsumerBaseV2, AccessControl{
         return false;
     }
 
-    function enterLottery(uint256 _lotteryId) public payable {
-        (uint256 lId, 
+    function enterLottery(uint256 _lotteryId, uint256 _count) public payable {
+        (address owner,
+        uint256 Id,
         uint256 ticketPrice, 
         uint256 prizePool, 
         address[] memory players, 
         address winner, 
         bool isFinished) = LOTTERY_DATA.getLottery(_lotteryId);
-        if(isPresent(players, msg.sender)) revert alreadyEntered();
         if(isFinished) revert lotteryNotActive();
-        if(players.length >= totalAllowedPlayers) revert lotteryFull();
-        if(msg.value < ticketPrice) revert invalidFee();
-        uint256  updatedPricePool = prizePool + msg.value;
-        LOTTERY_DATA.addPlayerToLottery(_lotteryId, updatedPricePool, msg.sender);
-        emit NewLotteryPlayer(_lotteryId, msg.sender, updatedPricePool);
+        if(msg.value < LOTTERY_DATA.lotteryTicketPrice * _count) revert invalidFee();
+        uint256 i = 0;
+        for(i = 0; i < _count; i++){
+            uint256  updatedPricePool = prizePool + LOTTERY_DATA.lotteryTicketPrice;
+            LOTTERY_DATA.addPlayerToLottery(_lotteryId, updatedPricePool, msg.sender);
+            emit NewLotteryPlayer(_lotteryId, msg.sender, updatedPricePool);
+        }
     }
 
     function pickWinner(uint256 _lotteryId) public onlyRole(RAFFLE_OWNER) {
@@ -165,6 +165,7 @@ contract Lottery is VRFConsumerBaseV2, AccessControl{
     }
 
     function getLotteryDetails(uint256 _lotteryId) public view returns(
+        address,
         uint256,
         uint256,
         uint256 ,

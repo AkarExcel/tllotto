@@ -6,7 +6,7 @@ pragma solidity ^0.8.7;
 contract LotteryData {
 
     struct LotteryInfo{
-        //address owner;
+        address owner;
         uint256 lotteryId;
         uint256 ticketPrice;
         uint256 prizePool;
@@ -18,7 +18,7 @@ contract LotteryData {
 
     uint256[] public allLotteries;
 
-    uint public lotteryTicketPrice = 0.02 ether;
+    uint256 public lotteryTicketPrice = 0.02 ether;
 
     address private manager;
     bool private isLotteryContractSet;
@@ -52,8 +52,9 @@ contract LotteryData {
     }
 
 
-    function addLotteryData(uint256 _lotteryId) external onlyLoterryContract{
+    function addLotteryData(uint256 _lotteryId, address _owner) external onlyLoterryContract{
         LotteryInfo memory lottery = LotteryInfo({
+            owner: _owner,
             lotteryId: _lotteryId,
             ticketPrice: lotteryTicketPrice,
             prizePool: 0,
@@ -102,6 +103,7 @@ contract LotteryData {
     }
 
     function getLottery(uint256 _lotteryId) external view returns(
+        address,
         uint256,
         uint256,
         uint256 ,
@@ -114,6 +116,7 @@ contract LotteryData {
                 revert lotteryNotFound();
             }
             return (
+                tmpLottery.owner,
                 tmpLottery.lotteryId,
                 tmpLottery.ticketPrice,
                 tmpLottery.prizePool,
