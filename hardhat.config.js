@@ -1,6 +1,9 @@
-require("@nomiclabs/hardhat-waffle");
-require("hardhat-deploy");
 require("@nomiclabs/hardhat-etherscan");
+require("@nomiclabs/hardhat-waffle");
+require("hardhat-gas-reporter");
+require("solidity-coverage");
+require("hardhat-deploy");
+require("@appliedblockchain/chainlink-plugins-fund-link");
 let secret = require("./secret.json")
 
 
@@ -29,24 +32,19 @@ module.exports = {
       chainId:1337
     },
     BSC_Testnet: {
-      url: secret.url,
+      url: secret.BSCTurl,
       accounts: [secret.key],
     },
     BSC_Mainnet: {
-      url: secret.Murl,
+      url: secret.BSCurl,
       accounts: [secret.key]
-    }
-  },
+    },
+    rinkeby: {
+      url: secret.rinkbyUrl || "",
+      chainId: 4,
+      accounts: [secret.key],
+    },
 
-  namedAccounts: {
-    deployer: {
-      default: [0]
-    }
-  },
-
-
-  etherscan: {
-    apiKey: secret.APIKey
   },
 
   namedAccounts: {
@@ -62,6 +60,15 @@ module.exports = {
       default: 2,
       4: 2,
     },
+  },
+
+  gasReporter: {
+    enabled: process.env.REPORT_GAS !== undefined,
+    currency: "USD",
+  },
+
+  etherscan: {
+    apiKey: secret.APIKey
   },
 
   solidity: {
@@ -88,5 +95,9 @@ module.exports = {
         version: "0.6.6"
       },
     ],
+  },
+  
+  mocha: {
+    timeout: 10000000,
   },
 };

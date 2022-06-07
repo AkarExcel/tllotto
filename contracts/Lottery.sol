@@ -9,6 +9,7 @@ import "@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/LinkTokenInterface.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
 import "./LotteryData.sol";
+import "hardhat/console.sol";
 
 contract Lottery is VRFConsumerBaseV2, AccessControl{
     VRFCoordinatorV2Interface COORDINATOR;
@@ -54,6 +55,8 @@ contract Lottery is VRFConsumerBaseV2, AccessControl{
     error playersNotFound();
     error onlyLotteryManagerAllowed();
     error ticketCostNotCorrect();
+    error onlyRaffleOwnerAllowed();
+    error Raffle__TransferFailed();
 
      constructor(
         bytes32 _keyHash,
@@ -96,21 +99,20 @@ contract Lottery is VRFConsumerBaseV2, AccessControl{
     }
 
     function startLottery(uint256 _lotteryTicketPrice) public payable onlyRole(RAFFLE_OWNER) {
-        LOTTERY_DATA.addLotteryData(lotteryId.current(), msg.sender);
+        LOTTERY_DATA.addLotteryData(lotteryId.current(), msg.sender, _lotteryTicketPrice);
+        console.log("current lotteryId: ", lotteryId.current());
         lotteryId.increment();
-        LOTTERY_DATA.lotteryTicketPrice = _lotteryTicketPrice;
+        console.log("new lotteryId: ", lotteryId.current());
         emit LotteryCreated(lotteryId.current(), msg.sender);
     }
-
-    function isPresent(address[] memory _p, address _a) public pure returns (bool){
-        for (uint i=0; i < _p.length; i++) {
-            if(_p[i] == _a) {
-                return true;
-            }
-        }
-        return false;
-    }
-
+    
+    /*@title this function is used to enter the lottery
+      @param _lotteryId is the id of the lottery
+      @param _count is the number of tickets to be purchased
+      @param owner is the address of the owner of the lottery
+      @param ticketPrice is the price of one ticket
+      @Summary: this function is used to enter the lottery wih the number of tickets to be purchased
+    */
     function enterLottery(uint256 _lotteryId, uint256 _count) public payable {
         (address owner,
         uint256 Id,
@@ -120,10 +122,10 @@ contract Lottery is VRFConsumerBaseV2, AccessControl{
         address winner, 
         bool isFinished) = LOTTERY_DATA.getLottery(_lotteryId);
         if(isFinished) revert lotteryNotActive();
-        if(msg.value < LOTTERY_DATA.lotteryTicketPrice * _count) revert invalidFee();
+        if(msg.value < ticketPrice * _count) revert invalidFee();
         uint256 i = 0;
         for(i = 0; i < _count; i++){
-            uint256  updatedPricePool = prizePool + LOTTERY_DATA.lotteryTicketPrice;
+            uint256  updatedPricePool = prizePool + ticketPrice;
             LOTTERY_DATA.addPlayerToLottery(_lotteryId, updatedPricePool, msg.sender);
             emit NewLotteryPlayer(_lotteryId, msg.sender, updatedPricePool);
         }
@@ -132,6 +134,7 @@ contract Lottery is VRFConsumerBaseV2, AccessControl{
     function pickWinner(uint256 _lotteryId) public onlyRole(RAFFLE_OWNER) {
 
         if(LOTTERY_DATA.isLotteryFinished(_lotteryId)) revert lotteryEnded();
+        if(LOTTERY_DATA.getLotteryOwner(_lotteryId) != msg.sender) revert onlyRaffleOwnerAllowed();
 
         address[] memory p = LOTTERY_DATA.getLotteryPlayers(_lotteryId);
         if(p.length == 1) {
@@ -154,13 +157,18 @@ contract Lottery is VRFConsumerBaseV2, AccessControl{
         }
     }
 
-    function fulfillRandomWords(uint256 requestId, uint256[] memory randomness) internal override {
+    function fulfillRandomWords(uint256 requestId, uint256[] memory randomness) internal override{
         uint256 _lotteryId = lotteryRandomnessRequest[requestId];
         address[] memory allPlayers = LOTTERY_DATA.getLotteryPlayers(_lotteryId);
         uint256 winnerIndex = randomness[0].mod(allPlayers.length);
         LOTTERY_DATA.setWinnerForLottery(_lotteryId, winnerIndex);
         delete lotteryRandomnessRequest[requestId];
-        payable(allPlayers[winnerIndex]).transfer(address(this).balance);
+        uint256 winPool = (address(this).balance * 80) / 100;
+        (bool success, ) = payable(allPlayers[winnerIndex]).call{value: winPool}("");
+        // require(success, "Transfer failed");
+        if (!success) {
+            revert Raffle__TransferFailed();
+        }
         emit WinnerDeclared(requestId,_lotteryId,allPlayers[winnerIndex]);
     }
 

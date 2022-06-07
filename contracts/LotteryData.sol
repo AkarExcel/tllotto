@@ -18,7 +18,7 @@ contract LotteryData {
 
     uint256[] public allLotteries;
 
-    uint256 public lotteryTicketPrice = 0.02 ether;
+    //uint256 public lotteryTicketPrice = 0.02 ether;
 
     address private manager;
     bool private isLotteryContractSet;
@@ -30,6 +30,7 @@ contract LotteryData {
     error lotteryNotFound();
     error onlyLotteryManagerAllowed();
     error actionNotAllowed();
+
 
     modifier onlyManager(){
         if(msg.sender != manager) revert onlyLotteryManagerAllowed();
@@ -52,7 +53,7 @@ contract LotteryData {
     }
 
 
-    function addLotteryData(uint256 _lotteryId, address _owner) external onlyLoterryContract{
+    function addLotteryData(uint256 _lotteryId, address _owner, uint256 lotteryTicketPrice) external onlyLoterryContract{
         LotteryInfo memory lottery = LotteryInfo({
             owner: _owner,
             lotteryId: _lotteryId,
@@ -84,6 +85,14 @@ contract LotteryData {
             revert lotteryNotFound();
         }
         return tmpLottery.players;
+    }
+
+    function getLotteryOwner(uint256 _lotteryId) public view returns(address) {
+        LotteryInfo memory tmpLottery = lotteries[_lotteryId];
+        if(tmpLottery.lotteryId == 0){
+            revert lotteryNotFound();
+        }
+        return tmpLottery.owner;
     }
 
     function isLotteryFinished(uint256 _lotteryId) public view returns(bool){
@@ -134,4 +143,12 @@ contract LotteryData {
         lottery.isFinished = true;
         lottery.winner = lottery.players[_winnerIndex];
     }
+
+    // function setLotteryTicketPrice(uint256 _lotteryId, uint256 _ticketPrice) external {
+    //     LotteryInfo storage lottery = lotteries[_lotteryId];
+    //     if(lottery.lotteryId == 0){
+    //         revert lotteryNotFound();
+    //     }
+    //     lottery.ticketPrice = _ticketPrice;
+    // }
 }
